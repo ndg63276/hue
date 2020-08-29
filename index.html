@@ -83,15 +83,22 @@ function redraw_devices(huelights) {
 		console.log(light);
 		var tr = document.createElement("tr");
                 var td = document.createElement("td");
+		var light_name = huelights[light]["name"];
+		var text = document.createTextNode(light_name);
+		td.appendChild(text);
+		tr.appendChild(td);
+                var td1 = document.createElement("td");
 		var but = document.createElement("button");
 		but.innerHTML = "Off";
-		but.onclick = function () { off() };
-                td.appendChild(but);
-                tr.appendChild(td);
+		but.onclick = function () { off(this) };
+		but.id = "off_"+light;
+                td1.appendChild(but);
+                tr.appendChild(td1);
                 var td2 = document.createElement("td");
 		var but2 = document.createElement("button");
 		but2.innerHTML = "On";
-		but2.onclick = function () { on() };
+		but2.onclick = function () { on(this) };
+		but2.id = "on_"+light;
                 td2.appendChild(but2);
                 tr.appendChild(td2);
                 var td3 = document.createElement("td");
@@ -99,8 +106,9 @@ function redraw_devices(huelights) {
 		inp.type = "range";
 		inp.min = 1;
 		inp.max = 254;
-		inp.value = 50;
-		inp.onchange = function () { slider(this.value) };
+		inp.value = huelights[light]["state"]["bri"];
+		inp.onchange = function () { slider(this) };
+		inp.id = "slider_"+light;
                 td3.appendChild(inp);
                 tr.appendChild(td3);
                 tbdy.appendChild(tr);
@@ -109,7 +117,8 @@ function redraw_devices(huelights) {
         switches.appendChild(tbl);
 }
 
-function on() {
+function on(element) {
+	light = element.id.replace("on_", "");
 	if (huehost == "") {
 		document.getElementById("hueaddress").value = "Press Get Host";
 		return;
@@ -119,7 +128,7 @@ function on() {
 		return;
 	}
         $.ajax({
-                url: huehost+"/api/"+hueuser+"/lights/3/state",
+                url: huehost+"/api/"+hueuser+"/lights/"+light+"/state",
                 type: "PUT",
                 data: JSON.stringify({"on": true}),
                 dataType: "json",
@@ -130,8 +139,8 @@ function on() {
 	})
 }
 
-function off() {
-	console.log("Off()");
+function off(element) {
+	light = element.id.replace("off_", "");
 	if (huehost == "") {
 		document.getElementById("hueaddress").value = "Press Get Host";
 		return;
@@ -141,7 +150,7 @@ function off() {
 		return;
 	}
         $.ajax({
-                url: huehost+"/api/"+hueuser+"/lights/3/state",
+                url: huehost+"/api/"+hueuser+"/lights/"+light+"/state",
                 type: "PUT",
                 data: JSON.stringify({"on": false}),
                 dataType: "json",
@@ -153,7 +162,9 @@ function off() {
 }
 
 
-function slider(val) {
+function slider(element) {
+	light = element.id.replace("slider_", "");
+	val = element.value;
 	if (huehost == "") {
 		document.getElementById("hueaddress").value = "Press Get Host";
 		return;
@@ -165,7 +176,7 @@ function slider(val) {
 	var data = {"bri": parseInt(val)}
 	console.log(data);
         $.ajax({
-                url: huehost+"/api/"+hueuser+"/lights/3/state",
+                url: huehost+"/api/"+hueuser+"/lights/"+light+"/state",
                 type: "PUT",
                 data: JSON.stringify(data),
                 dataType: "json",
