@@ -1,0 +1,185 @@
+<html>
+<head>
+<script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+<script src="../general_functions.js"></script>
+<script>
+var huehost = "";
+var hueuser = "";
+var huelights = {};
+
+function gethost() {
+        $.ajax({
+                url: "https://discovery.meethue.com/",
+                type: "GET",
+                async: false,
+                success: function (json) {
+			console.log(json);
+			if ("internalipaddress" in json[0]) {
+				hueaddress = json[0]["internalipaddress"];
+				setCookie("hueaddress", hueaddress, 365*24);
+				document.getElementById("hueaddress").value = "Hub found at "+hueaddress;
+				huehost = "https://"+hueaddress;
+			} else {
+				document.getElementById("hueaddress").value = "Hub not found";
+			}
+		}
+	})
+}
+
+function getuser() {
+	if (huehost == "") {
+		document.getElementById("hueaddress").value = "Press Get Host";
+		return;
+	}
+	console.log("getting user");
+        $.ajax({
+                url: huehost+"/api",
+                type: "POST",
+                data: JSON.stringify({"devicetype":"my_hue_app#iphone peter"}),
+                dataType: "json",
+                async: false,
+                success: function (json) {
+			console.log(json)
+			if ("success" in json[0]) {
+				hueuser = json[0]["success"]["username"];
+				document.getElementById("hueuser").value = hueuser;
+				setCookie("hueuser", hueuser, 365*24);
+			}
+			if ("error" in json[0] && json[0]["error"]["type"] == 101) {
+				document.getElementById("hueuser").value = "Press Hub button and try again";
+			}
+		}
+	})
+}
+
+function getinfo() {
+	if (huehost == "") {
+		document.getElementById("hueaddress").value = "Press Get Host";
+		return;
+	}
+	if (hueuser == "") {
+		document.getElementById("hueuser").value = "Press Hub button then Get User";
+		return;
+	}
+	console.log("getting info");
+        $.ajax({
+                url: huehost+"/api/"+hueuser+"/lights",
+                type: "GET",
+                async: false,
+                success: function (json) {
+			huelights = json;
+			console.log(huelights);		
+		}
+	})
+}
+
+
+function on() {
+	if (huehost == "") {
+		document.getElementById("hueaddress").value = "Press Get Host";
+		return;
+	}
+	if (hueuser == "") {
+		document.getElementById("hueuser").value = "Press Hub button then Get User";
+		return;
+	}
+        $.ajax({
+                url: huehost+"/api/"+hueuser+"/lights/3/state",
+                type: "PUT",
+                data: JSON.stringify({"on": true}),
+                dataType: "json",
+                async: false,
+                success: function (json) {
+			console.log(json);
+		}
+	})
+}
+
+function off() {
+	if (huehost == "") {
+		document.getElementById("hueaddress").value = "Press Get Host";
+		return;
+	}
+	if (hueuser == "") {
+		document.getElementById("hueuser").value = "Press Hub button then Get User";
+		return;
+	}
+        $.ajax({
+                url: huehost+"/api/"+hueuser+"/lights/3/state",
+                type: "PUT",
+                data: JSON.stringify({"on": false}),
+                dataType: "json",
+                async: false,
+                success: function (json) {
+			console.log(json);
+		}
+	})
+}
+
+
+function slider() {
+	if (huehost == "") {
+		document.getElementById("hueaddress").value = "Press Get Host";
+		return;
+	}
+	if (hueuser == "") {
+		document.getElementById("hueuser").value = "Press Hub button then Get User";
+		return;
+	}
+	slideId = document.getElementById("myRange")
+	var data = {"bri": parseInt(slideId.value)}
+	console.log(data);
+        $.ajax({
+                url: huehost+"/api/"+hueuser+"/lights/3/state",
+                type: "PUT",
+                data: JSON.stringify(data),
+                dataType: "json",
+                async: false,
+                success: function (json) {
+			console.log(json);
+		}
+	})
+
+}
+
+window.onload = function() {
+	var hueaddress = getCookie("hueaddress");
+	if (hueaddress != "") {
+		document.getElementById("hueaddress").value = "Hub found at " + hueaddress;
+		huehost = "https://"+hueaddress;
+	}
+	hueuser = getCookie("hueuser");
+	if (hueuser != "") {
+		document.getElementById("hueuser").value = hueuser;
+	}
+}
+
+$( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
+	console.log(jqxhr["statusText"]);
+	if (jqxhr["statusText"].includes("NetworkError: Failed to execute 'send' on 'XMLHttpRequest'")) {
+		someHTML = "<br />Click this <a href='"+huehost+"'>link</a>, then click the Advanced button,"
+		someHTML += " then click \"Proceed to "+huehost+" (unsafe)\"<br /><br />";
+		document.getElementById("httpswarning").innerHTML = someHTML;
+	} else {
+		console.log(jqxhr["statusText"]);
+	}
+});
+
+</script>
+</head>
+<body>
+Hue hub: <input type="text" id="hueaddress" value="not found">
+<button onclick="gethost()">Get Host</button>
+<br /><br />
+Hue user: <input type="text" id="hueuser" value="Press Hub button then Get User">
+<button onclick="getuser()">Get User</button>
+<div id="httpswarning">
+<br /><br /></div>
+<button onclick="getinfo()">Get Info</button>
+<br /><br />
+<input type="range" min="1" max="254" value="50" class="slider" id="myRange" onchange="slider()">
+<button onclick="on()">On</button>
+<button onclick="off()">Off</button>
+<br /><br />
+</body>
+</html>
