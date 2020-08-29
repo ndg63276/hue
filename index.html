@@ -69,10 +69,45 @@ function getinfo() {
                 success: function (json) {
 			huelights = json;
 			console.log(huelights);		
+			redraw_devices(huelights);
 		}
 	})
 }
 
+function redraw_devices(huelights) {
+        var switches = document.getElementById("switches");
+        switches.innerHTML = "";
+        var tbl = document.createElement("table");
+        var tbdy = document.createElement("tbody");
+	for (light in huelights) {
+		console.log(light);
+		var tr = document.createElement("tr");
+                var td = document.createElement("td");
+		var but = document.createElement("button");
+		but.innerHTML = "Off";
+		but.onclick = function () { off() };
+                td.appendChild(but);
+                tr.appendChild(td);
+                var td2 = document.createElement("td");
+		var but2 = document.createElement("button");
+		but2.innerHTML = "On";
+		but2.onclick = function () { on() };
+                td2.appendChild(but2);
+                tr.appendChild(td2);
+                var td3 = document.createElement("td");
+		var inp = document.createElement("input");
+		inp.type = "range";
+		inp.min = 1;
+		inp.max = 254;
+		inp.value = 50;
+		inp.onchange = function () { slider(this.value) };
+                td3.appendChild(inp);
+                tr.appendChild(td3);
+                tbdy.appendChild(tr);
+	}
+        tbl.appendChild(tbdy);
+        switches.appendChild(tbl);
+}
 
 function on() {
 	if (huehost == "") {
@@ -96,6 +131,7 @@ function on() {
 }
 
 function off() {
+	console.log("Off()");
 	if (huehost == "") {
 		document.getElementById("hueaddress").value = "Press Get Host";
 		return;
@@ -117,7 +153,7 @@ function off() {
 }
 
 
-function slider() {
+function slider(val) {
 	if (huehost == "") {
 		document.getElementById("hueaddress").value = "Press Get Host";
 		return;
@@ -126,8 +162,7 @@ function slider() {
 		document.getElementById("hueuser").value = "Press Hub button then Get User";
 		return;
 	}
-	slideId = document.getElementById("myRange")
-	var data = {"bri": parseInt(slideId.value)}
+	var data = {"bri": parseInt(val)}
 	console.log(data);
         $.ajax({
                 url: huehost+"/api/"+hueuser+"/lights/3/state",
@@ -177,9 +212,8 @@ Hue user: <input type="text" id="hueuser" value="Press Hub button then Get User"
 <br /><br /></div>
 <button onclick="getinfo()">Get Info</button>
 <br /><br />
-<input type="range" min="1" max="254" value="50" class="slider" id="myRange" onchange="slider()">
-<button onclick="on()">On</button>
-<button onclick="off()">Off</button>
+<div id="switches"></div>
+
 <br /><br />
 </body>
 </html>
