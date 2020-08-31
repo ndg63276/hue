@@ -9,27 +9,30 @@ var hueuser = "";
 var huelights = {};
 
 function gethost() {
+	var to_return = { "hueid": "", "huehost": ""};
 	$.ajax({
 		url: "https://discovery.meethue.com/",
 		type: "GET",
 		async: false,
 		success: function (json) {
 			console.log(json);
-			if ("internalipaddress" in json[0]) {
+			if (json.length == 1 && "internalipaddress" in json[0]) {
 				hueaddress = json[0]["internalipaddress"];
-				setCookie("hueaddress", hueaddress, 365*24);
-				document.getElementById("hueaddress").value = "Hub found at "+hueaddress;
+				hueid = json[0]["id"];
+				document.getElementById("hueaddress").innerHTML = "Hub found at "+hueaddress;
 				huehost = "https://"+hueaddress;
+				to_return = { "hueid": hueid, "huehost": huehost};
 			} else {
-				document.getElementById("hueaddress").value = "Hub not found";
+				document.getElementById("hueaddress").innerHTML = "Hub not found";
 			}
 		}
 	})
+	return to_return;
 }
 
 function getuser() {
 	if (huehost == "") {
-		document.getElementById("hueaddress").value = "Press Get Host";
+		document.getElementById("hueaddress").innerHTML = "No Hue hub found";
 		return;
 	}
 	console.log("getting user");
@@ -55,7 +58,7 @@ function getuser() {
 
 function getinfo() {
 	if (huehost == "") {
-		document.getElementById("hueaddress").value = "Press Get Host";
+		document.getElementById("hueaddress").innerHTML = "No hue hub found";
 		return;
 	}
 	if (hueuser == "") {
@@ -128,7 +131,7 @@ function redraw_devices(huelights) {
 function on(element) {
 	light = element.id.replace("on_", "");
 	if (huehost == "") {
-		document.getElementById("hueaddress").value = "Press Get Host";
+		document.getElementById("hueaddress").innerHTML = "No hue hub found";
 		return;
 	}
 	if (hueuser == "") {
@@ -151,7 +154,7 @@ function on(element) {
 function off(element) {
 	light = element.id.replace("off_", "");
 	if (huehost == "") {
-		document.getElementById("hueaddress").value = "Press Get Host";
+		document.getElementById("hueaddress").innerHTML = "No hue hub found";
 		return;
 	}
 	if (hueuser == "") {
@@ -176,7 +179,7 @@ function slider(element) {
 	light = element.id.replace("slider_", "");
 	val = element.value;
 	if (huehost == "") {
-		document.getElementById("hueaddress").value = "Press Get Host";
+		document.getElementById("hueaddress").innerHTML = "No hue hub found";
 		return;
 	}
 	if (hueuser == "") {
@@ -199,14 +202,18 @@ function slider(element) {
 }
 
 window.onload = function() {
-	var hueaddress = getCookie("hueaddress");
-	if (hueaddress != "") {
-		document.getElementById("hueaddress").value = "Hub found at " + hueaddress;
-		huehost = "https://"+hueaddress;
-	}
-	hueuser = getCookie("hueuser");
-	if (hueuser != "") {
-		document.getElementById("hueuser").value = hueuser;
+	user_info = gethost();
+	prev_id = getCookie("hueid");
+	if (prev_id == user_info["hueid"]) {
+		hueuser = getCookie("hueuser");
+		if (hueuser != "") {
+			document.getElementById("hueuser").value = hueuser;
+		}
+	} else if (user_info["hue_id"] == "") {
+		document.getElementById("hueaddress").innerHTML = "Hub not found";
+	} else {
+		setCookie("hueid", user_info["hueid"], 365*24);
+		getuser();
 	}
 }
 
@@ -224,8 +231,7 @@ $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 </script>
 </head>
 <body>
-Hue hub: <input type="text" id="hueaddress" value="not found">
-<button onclick="gethost()">Get Host</button>
+<div id="hueaddress">Searching for hub...</div>
 <br /><br />
 Hue user: <input type="text" id="hueuser" value="Press Hub button then Get User">
 <button onclick="getuser()">Get User</button>
