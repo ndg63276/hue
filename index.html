@@ -4,9 +4,8 @@
 <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
 <script src="../general_functions.js"></script>
 <script>
-var huehost = "";
-var hueuser = "";
 var huelights = {};
+var user_info = {};
 
 function gethost() {
 	var to_return = { "hueid": "", "huehost": ""};
@@ -31,13 +30,14 @@ function gethost() {
 }
 
 function getuser() {
-	if (huehost == "") {
+	if (user_info["huehost"] == "") {
 		document.getElementById("hueaddress").innerHTML = "No Hue hub found";
 		return;
 	}
 	console.log("getting user");
+	to_return = "";
 	$.ajax({
-		url: huehost+"/api",
+		url: user_info["huehost"]+"/api",
 		type: "POST",
 		data: JSON.stringify({"devicetype":"my_hue_app#iphone peter"}),
 		dataType: "json",
@@ -48,31 +48,33 @@ function getuser() {
 				hueuser = json[0]["success"]["username"];
 				document.getElementById("hueuser").value = hueuser;
 				setCookie("hueuser", hueuser, 365*24);
+				to_return = hueuser;
 			}
 			if ("error" in json[0] && json[0]["error"]["type"] == 101) {
 				document.getElementById("hueuser").value = "Press Hub button and try again";
 			}
 		}
 	})
+	return to_return;
 }
 
 function getinfo() {
-	if (huehost == "") {
+	if (user_info["huehost"] == "") {
 		document.getElementById("hueaddress").innerHTML = "No hue hub found";
 		return;
 	}
-	if (hueuser == "") {
+	if (user_info["hueuser"] == "") {
 		document.getElementById("hueuser").value = "Press Hub button then Get User";
 		return;
 	}
 	console.log("getting info");
 	$.ajax({
-		url: huehost+"/api/"+hueuser+"/lights",
+		url: user_info["huehost"]+"/api/"+user_info["hueuser"]+"/lights",
 		type: "GET",
 		async: false,
 		success: function (json) {
 			huelights = json;
-			console.log(huelights);		
+			console.log(huelights);
 			redraw_devices(huelights);
 		}
 	})
@@ -131,7 +133,7 @@ function redraw_devices(huelights) {
 function on(element) {
 	light = element.id.replace("on_", "");
 	$.ajax({
-		url: huehost+"/api/"+hueuser+"/lights/"+light+"/state",
+		url: user_info["huehost"]+"/api/"+user_info["hueuser"]+"/lights/"+light+"/state",
 		type: "PUT",
 		data: JSON.stringify({"on": true}),
 		dataType: "json",
@@ -146,7 +148,7 @@ function on(element) {
 function off(element) {
 	light = element.id.replace("off_", "");
 	$.ajax({
-		url: huehost+"/api/"+hueuser+"/lights/"+light+"/state",
+		url: user_info["huehost"]+"/api/"+user_info["hueuser"]+"/lights/"+light+"/state",
 		type: "PUT",
 		data: JSON.stringify({"on": false}),
 		dataType: "json",
@@ -165,7 +167,7 @@ function slider(element) {
 	var data = {"bri": parseInt(val)}
 	console.log(data);
 	$.ajax({
-		url: huehost+"/api/"+hueuser+"/lights/"+light+"/state",
+		url: user_info["huehost"]+"/api/"+user_info["hueuser"]+"/lights/"+light+"/state",
 		type: "PUT",
 		data: JSON.stringify(data),
 		dataType: "json",
@@ -181,25 +183,33 @@ window.onload = function() {
 	user_info = gethost();
 	prev_id = getCookie("hueid");
 	if (prev_id == user_info["hueid"]) {
-		hueuser = getCookie("hueuser");
-		if (hueuser != "") {
-			document.getElementById("hueuser").value = hueuser;
+		user_info["hueuser"] = getCookie("hueuser");
+		if (user_info["hueuser"] == "") {
+			user_info["hueuser"] = getuser();
+			if (user_info["hueuser"] != "") {
+				getinfo();
+			}
+		} else {
+			document.getElementById("hueuser").value = user_info["hueuser"];
 			getinfo();
 		}
-	} else if (user_info["hue_id"] == "") {
+	} else if (user_info["hueid"] == "") {
 		document.getElementById("hueaddress").innerHTML = "Hub not found";
 	} else {
 		setCookie("hueid", user_info["hueid"], 365*24);
-		getuser();
+		user_info["hueuser"] = getuser();
+		if (user_info["hueuser"] != "") {
+			getinfo();
+		}
 	}
 }
 
 $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 	console.log(jqxhr["statusText"]);
 	if (jqxhr["statusText"].includes("NetworkError: Failed to execute 'send' on 'XMLHttpRequest'")) {
-		someHTML = "<br />Click this <a href='"+huehost+"'>link</a>, then click the Advanced button,"
-		someHTML += " then click \"Proceed to "+huehost+" (unsafe)\"<br /><br />";
-		document.getElementById("httpswarning").innerHTML = someHTML;
+		proceedHTML = "<br />Click this <a href='"+user_info["huehost"]+"' target='_blank'>link</a>, then click the Advanced button,"
+		proceedHTML += " then click \"Proceed to "+user_info["huehost"]+" (unsafe)\"<br /><br />";
+		document.getElementById("httpswarning").innerHTML = proceedHTML;
 	} else {
 		console.log(jqxhr["statusText"]);
 	}
@@ -214,8 +224,6 @@ Hue user: <input type="text" id="hueuser" value="Press Hub button then Get User"
 <button onclick="getuser()">Get User</button>
 <div id="httpswarning">
 <br /><br /></div>
-<button onclick="getinfo()">Get Info</button>
-<br /><br />
 <div id="switches"></div>
 
 <br /><br />
