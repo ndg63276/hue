@@ -130,14 +130,6 @@ function redraw_devices(huelights) {
 
 function on(element) {
 	light = element.id.replace("on_", "");
-	if (huehost == "") {
-		document.getElementById("hueaddress").innerHTML = "No hue hub found";
-		return;
-	}
-	if (hueuser == "") {
-		document.getElementById("hueuser").value = "Press Hub button then Get User";
-		return;
-	}
 	$.ajax({
 		url: huehost+"/api/"+hueuser+"/lights/"+light+"/state",
 		type: "PUT",
@@ -153,14 +145,6 @@ function on(element) {
 
 function off(element) {
 	light = element.id.replace("off_", "");
-	if (huehost == "") {
-		document.getElementById("hueaddress").innerHTML = "No hue hub found";
-		return;
-	}
-	if (hueuser == "") {
-		document.getElementById("hueuser").value = "Press Hub button then Get User";
-		return;
-	}
 	$.ajax({
 		url: huehost+"/api/"+hueuser+"/lights/"+light+"/state",
 		type: "PUT",
@@ -178,14 +162,6 @@ function off(element) {
 function slider(element) {
 	light = element.id.replace("slider_", "");
 	val = element.value;
-	if (huehost == "") {
-		document.getElementById("hueaddress").innerHTML = "No hue hub found";
-		return;
-	}
-	if (hueuser == "") {
-		document.getElementById("hueuser").value = "Press Hub button then Get User";
-		return;
-	}
 	var data = {"bri": parseInt(val)}
 	console.log(data);
 	$.ajax({
@@ -208,6 +184,7 @@ window.onload = function() {
 		hueuser = getCookie("hueuser");
 		if (hueuser != "") {
 			document.getElementById("hueuser").value = hueuser;
+			getinfo();
 		}
 	} else if (user_info["hue_id"] == "") {
 		document.getElementById("hueaddress").innerHTML = "Hub not found";
