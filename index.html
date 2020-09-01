@@ -29,13 +29,8 @@ function gethost() {
 	return to_return;
 }
 
-function getuser() {
-	if (user_info["huehost"] == "") {
-		document.getElementById("hueaddress").innerHTML = "No Hue hub found";
-		return;
-	}
-	console.log("getting user");
-	to_return = "";
+function request_user() {
+	to_return = {};
 	$.ajax({
 		url: user_info["huehost"]+"/api",
 		type: "POST",
@@ -43,19 +38,38 @@ function getuser() {
 		dataType: "json",
 		async: false,
 		success: function (json) {
-			console.log(json)
-			if ("success" in json[0]) {
-				hueuser = json[0]["success"]["username"];
-				document.getElementById("hueuser").value = hueuser;
-				setCookie("hueuser", hueuser, 365*24);
-				to_return = hueuser;
-			}
-			if ("error" in json[0] && json[0]["error"]["type"] == 101) {
-				document.getElementById("hueuser").value = "Press Hub button and try again";
-			}
+			to_return = json
 		}
 	})
 	return to_return;
+}
+
+function getuser() {
+	if (user_info["huehost"] == "") {
+		document.getElementById("hueaddress").innerHTML = "No Hue hub found";
+		return;
+	}
+	user_info["hueuser"] = getCookie("hueuser");
+	if (user_info["hueuser"] != "") {
+		document.getElementById("hueuser").value = user_info["hueuser"];
+		document.getElementById("getuser").classList.add("ui-disabled");
+		getinfo();
+		return;
+	}
+	console.log("getting user");
+	user_response = request_user();
+	console.log(user_response);
+	if ("success" in user_response[0]) {
+		user_info["hueuser"] = user_response[0]["success"]["username"];
+		document.getElementById("hueuser").value = user_info["hueuser"];
+		document.getElementById("getuser").classList.add("ui-disabled");
+		setCookie("hueuser", user_info["hueuser"], 365*24);
+		getinfo();
+	}
+	if ("error" in user_response[0] && user_response[0]["error"]["type"] == 101) {
+		document.getElementById("hueuser").value = "Press Hub button then Get User";
+	}
+	return;
 }
 
 function getinfo() {
@@ -183,24 +197,12 @@ window.onload = function() {
 	user_info = gethost();
 	prev_id = getCookie("hueid");
 	if (prev_id == user_info["hueid"]) {
-		user_info["hueuser"] = getCookie("hueuser");
-		if (user_info["hueuser"] == "") {
-			user_info["hueuser"] = getuser();
-			if (user_info["hueuser"] != "") {
-				getinfo();
-			}
-		} else {
-			document.getElementById("hueuser").value = user_info["hueuser"];
-			getinfo();
-		}
+		getuser();
 	} else if (user_info["hueid"] == "") {
 		document.getElementById("hueaddress").innerHTML = "Hub not found";
 	} else {
 		setCookie("hueid", user_info["hueid"], 365*24);
-		user_info["hueuser"] = getuser();
-		if (user_info["hueuser"] != "") {
-			getinfo();
-		}
+		getuser();
 	}
 }
 
@@ -221,7 +223,7 @@ $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 <div id="hueaddress">Searching for hub...</div>
 <br /><br />
 Hue user: <input type="text" id="hueuser" value="Press Hub button then Get User">
-<button onclick="getuser()">Get User</button>
+<button onclick="getuser()" id="getuser">Get User</button>
 <div id="httpswarning">
 <br /><br /></div>
 <div id="switches"></div>
