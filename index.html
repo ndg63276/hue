@@ -1,6 +1,9 @@
 <html>
 <head>
+
 <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+<link rel="stylesheet" type="text/css" href="../styles.css">
+
 <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
 <script src="../general_functions.js"></script>
 <script>
@@ -29,8 +32,8 @@ function gethost() {
 	return to_return;
 }
 
-function request_user() {
-	to_return = {};
+function request_user(tries) {
+	console.log(tries);
 	$.ajax({
 		url: user_info["huehost"]+"/api",
 		type: "POST",
@@ -38,49 +41,49 @@ function request_user() {
 		dataType: "json",
 		async: false,
 		success: function (json) {
-			to_return = json
+			if ("success" in json[0]) {
+				user_info["hueuser"] = json[0]["success"]["username"];
+			}
+			if ("error" in json[0] && json[0]["error"]["type"] == 101) {
+				document.getElementById("hueuser").innerHTML = "Press the button on your Hue hub to authenticate...";
+			}
 		}
 	})
-	return to_return;
+	if (user_info["hueuser"] != "") {
+		document.getElementById("hueuser").innerHTML = "Hub authenticated!";
+		setCookie("hueuser", user_info["hueuser"], 365*24);
+		getinfo();
+	}
+	maxTries = 10;
+	if (tries >= maxTries) {
+		document.getElementById("hueuser").innerHTML = "Hub not authenticated";
+		document.getElementById("getuser").classList.remove("hidden");
+	}
+	if (user_info["hueuser"] == "" && tries < maxTries) {
+		setTimeout(request_user, 3000, tries+1);
+	}
 }
 
 function getuser() {
+	document.getElementById("getuser").classList.add("hidden");
 	if (user_info["huehost"] == "") {
 		document.getElementById("hueaddress").innerHTML = "No Hue hub found";
 		return;
 	}
 	user_info["hueuser"] = getCookie("hueuser");
 	if (user_info["hueuser"] != "") {
-		document.getElementById("hueuser").value = user_info["hueuser"];
-		document.getElementById("getuser").classList.add("ui-disabled");
+		document.getElementById("hueuser").innerHTML = "Hub authenticated";
 		getinfo();
 		return;
 	}
 	console.log("getting user");
-	user_response = request_user();
-	console.log(user_response);
-	if ("success" in user_response[0]) {
-		user_info["hueuser"] = user_response[0]["success"]["username"];
-		document.getElementById("hueuser").value = user_info["hueuser"];
-		document.getElementById("getuser").classList.add("ui-disabled");
-		setCookie("hueuser", user_info["hueuser"], 365*24);
-		getinfo();
-	}
-	if ("error" in user_response[0] && user_response[0]["error"]["type"] == 101) {
-		document.getElementById("hueuser").value = "Press Hub button then Get User";
+	if (user_info["hueuser"] == "") {
+		request_user(0);
 	}
 	return;
 }
 
 function getinfo() {
-	if (user_info["huehost"] == "") {
-		document.getElementById("hueaddress").innerHTML = "No hue hub found";
-		return;
-	}
-	if (user_info["hueuser"] == "") {
-		document.getElementById("hueuser").value = "Press Hub button then Get User";
-		return;
-	}
 	console.log("getting info");
 	$.ajax({
 		url: user_info["huehost"]+"/api/"+user_info["hueuser"]+"/lights",
@@ -222,8 +225,8 @@ $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 <body>
 <div id="hueaddress">Searching for hub...</div>
 <br /><br />
-Hue user: <input type="text" id="hueuser" value="Press Hub button then Get User">
-<button onclick="getuser()" id="getuser">Get User</button>
+<div id="hueuser"></div>
+<button onclick="getuser()" id="getuser" class="hidden">Retry</button>
 <div id="httpswarning">
 <br /><br /></div>
 <div id="switches"></div>
