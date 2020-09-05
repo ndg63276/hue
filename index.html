@@ -1,11 +1,34 @@
-<html>
-<head>
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" >
+<head profile="http://www.w3.org/2005/10/profile">
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-164510568-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+
+  gtag("config", "UA-164510568-1");
+</script>
 
 <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
-<link rel="stylesheet" type="text/css" href="../styles.css">
-
 <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description"
+        content="Control your Hue lights through your web browser.
+                instead of using the Hue app.">
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<link rel="icon" type="image/png" href="../short_logo_trans.png">
+<link rel="stylesheet" type="text/css" href="../styles.css">
+<title>SmartAtHome.co.uk - My Hue Devices</title>
 <script src="../general_functions.js"></script>
+<script src="functions.js"></script>
+
 <script>
 var huelights = {};
 var user_info = {};
@@ -197,6 +220,7 @@ function slider(element) {
 }
 
 window.onload = function() {
+	testFirstCookie();
 	user_info = gethost();
 	prev_id = getCookie("hueid");
 	if (prev_id == user_info["hueid"]) {
@@ -223,6 +247,11 @@ $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 </script>
 </head>
 <body>
+<div id="page" data-role="page">
+<center>
+<a href="../index.html"><img src="../long_logo.png" alt="smartathome.co.uk logo" id="logo"></a>
+<a href="../index.html"><img src="../long_logo_dark.png" alt="smartathome.co.uk logo" id="logo_dark" class="hidden"></a>
+<br /><br />
 <div id="hueaddress">Searching for hub...</div>
 <br /><br />
 <div id="hueuser"></div>
@@ -231,6 +260,10 @@ $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 <br /><br /></div>
 <div id="switches"></div>
 
-<br /><br />
-</body>
-</html>
+</center>
+<div id="myCookieConsent">
+<a id="cookieButton" onClick="acceptCookies()">Understood</a>
+<div>This website is using cookies. <a href="../cookies.html">More details</a></div>
+</div>
+</div><!-- /page -->
+</body></html>
