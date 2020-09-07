@@ -25,9 +25,13 @@
 <meta http-equiv="Expires" content="0" />
 <link rel="icon" type="image/png" href="../short_logo_trans.png">
 <link rel="stylesheet" type="text/css" href="../styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/spectrum-colorpicker2@2.0.0/dist/spectrum.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/spectrum-colorpicker2@2.0.0/dist/spectrum.min.css">
+
 <title>SmartAtHome.co.uk - My Hue Devices</title>
 <script src="../general_functions.js"></script>
-<script src="functions.js"></script>
+<!--script src="functions.js"></script-->
 
 <script>
 var huelights = {};
@@ -126,7 +130,6 @@ function redraw_devices(huelights) {
 	var tbl = document.createElement("table");
 	var tbdy = document.createElement("tbody");
 	for (light in huelights) {
-		console.log(light);
 		light_on = huelights[light]["state"]["on"];
 		reachable = huelights[light]["state"]["reachable"];
 		var tr = document.createElement("tr");
@@ -164,10 +167,23 @@ function redraw_devices(huelights) {
 			td3.appendChild(inp);
 			tr.appendChild(td3);
 		}
+		if ( "hue" in huelights[light]["state"] ) {
+			var td4 = document.createElement("td");
+			var inp2 = document.createElement("input");
+			h = 360 * huelights[light]["state"]["hue"] / 65535;
+			s = huelights[light]["state"]["sat"] / 2.54;
+			v = 100;
+			inp2.value = "hsv("+h+", "+s+", "+v+")";
+			inp2.id = "color_"+light;
+			if ( (!reachable) || (!light_on) ) { inp2.classList.add("color_disabled") };
+			td4.appendChild(inp2);
+			tr.appendChild(td4);
+		}
 		tbdy.appendChild(tr);
 	}
 	tbl.appendChild(tbdy);
 	switches.appendChild(tbl);
+	setUpColors();
 }
 
 function on(element) {
@@ -219,6 +235,42 @@ function slider(element) {
 	getinfo();
 }
 
+function changeColor(element) {
+	light = element.id.replace("color_", "");
+	var t = $("#"+element.id).spectrum("get");
+	hsv = t.toHsv();
+	h = parseInt(65535 * hsv["h"] / 360);
+	s = parseInt(254 * hsv["s"]);
+	v = parseInt(254 * hsv["v"]);
+	var data = {"hue": h, "sat": s};
+	console.log(data);
+	$.ajax({
+		url: user_info["huehost"]+"/api/"+user_info["hueuser"]+"/lights/"+light+"/state",
+		type: "PUT",
+		data: JSON.stringify(data),
+		dataType: "json",
+		async: false,
+		success: function (json) {
+			console.log(json);
+		}
+	})
+	getinfo();
+}
+
+function setUpColors() {
+	$("[id^=color_]").spectrum({
+		type: "color",
+		hideAfterPaletteSelect: true,
+		showInitial: true,
+		showAlpha: false,
+		allowEmpty: false,
+		change: function() {
+			changeColor(this)
+		}
+	});
+	$(".color_disabled").spectrum("disable");
+}
+
 window.onload = function() {
 	testFirstCookie();
 	user_info = gethost();
@@ -231,6 +283,7 @@ window.onload = function() {
 		setCookie("hueid", user_info["hueid"], 365*24);
 		getuser();
 	}
+	setUpColors();
 }
 
 $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
@@ -243,6 +296,8 @@ $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 		console.log(jqxhr["statusText"]);
 	}
 });
+
+
 
 </script>
 </head>
@@ -261,6 +316,7 @@ $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 <div id="switches"></div>
 
 </center>
+
 <div id="myCookieConsent">
 <a id="cookieButton" onClick="acceptCookies()">Understood</a>
 <div>This website is using cookies. <a href="../cookies.html">More details</a></div>
