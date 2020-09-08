@@ -77,7 +77,9 @@ function request_user(tries) {
 		}
 	})
 	if (user_info["hueuser"] != "") {
-		document.getElementById("hueuser").innerHTML = "Hub authenticated!";
+		document.getElementById("hueuser").classList.add("hidden");
+		address_text = document.getElementById("hueaddress").innerHTML;
+		document.getElementById("hueaddress").innerHTML = address_text.replace("found", "authenticated");
 		setCookie("hueuser", user_info["hueuser"], 365*24);
 		getinfo();
 	}
@@ -99,7 +101,9 @@ function getuser() {
 	}
 	user_info["hueuser"] = getCookie("hueuser");
 	if (user_info["hueuser"] != "") {
-		document.getElementById("hueuser").innerHTML = "Hub authenticated";
+		address_text = document.getElementById("hueaddress").innerHTML;
+		document.getElementById("hueaddress").innerHTML = address_text.replace("found", "authenticated");
+		document.getElementById("hueuser").classList.add("hidden");
 		getinfo();
 		return;
 	}
@@ -289,9 +293,10 @@ window.onload = function() {
 $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 	console.log(jqxhr["statusText"]);
 	if (jqxhr["statusText"].includes("NetworkError: Failed to execute 'send' on 'XMLHttpRequest'")) {
-		proceedHTML = "<br />Click this <a href='"+user_info["huehost"]+"' target='_blank'>link</a>, then click the Advanced button,"
+		proceedHTML = "Click this <a href='"+user_info["huehost"]+"' target='_blank'>link</a>, then click the Advanced button,"
 		proceedHTML += " then click \"Proceed to "+user_info["huehost"]+" (unsafe)\"<br /><br />";
 		document.getElementById("httpswarning").innerHTML = proceedHTML;
+		document.getElementById("httpswarning").classList.remove("hidden");
 	} else {
 		console.log(jqxhr["statusText"]);
 	}
@@ -311,7 +316,7 @@ $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 <br /><br />
 <div id="hueuser"></div>
 <button onclick="getuser()" id="getuser" class="hidden">Retry</button>
-<div id="httpswarning">
+<div id="httpswarning" class="hidden">
 <br /><br /></div>
 <div id="switches"></div>
 
