@@ -51,10 +51,16 @@ $( document ).ready(function() {
 
 $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 	console.log(jqxhr["statusText"]);
-	if (jqxhr["statusText"].includes("NetworkError: Failed to execute 'send' on 'XMLHttpRequest'")) {
-		proceedHTML = "Click this <a href='"+user_info["huehost"]+"' target='_blank'>link</a>, then click the Advanced button,"
-		proceedHTML += " then click \"Proceed to "+user_info["huehost"]+" (unsafe)\"<br /><br />";
-		document.getElementById("httpswarning").innerHTML = proceedHTML;
+	if (jqxhr["statusText"].includes("NetworkError")) {
+		chromeProceedHTML = "Click this <a href='"+user_info["huehost"]+"' target='_blank'>link</a>, then click the Advanced button,"
+		chromeProceedHTML += " then click \"Proceed to "+user_info["huehost"]+" (unsafe)\"<br /><br />";
+		firefoxProceedHTML = "Click this <a href='"+user_info["huehost"]+"' target='_blank'>link</a>, then click the Advanced button,"
+		firefoxProceedHTML += " then click \"Accept the Risk and Continue\"<br /><br />";
+		if(navigator.userAgent.indexOf("Firefox") != -1 ) {
+			document.getElementById("httpswarning").innerHTML = firefoxProceedHTML;
+		} else {
+			document.getElementById("httpswarning").innerHTML = chromeProceedHTML;
+		}
 		document.getElementById("httpswarning").classList.remove("hidden");
 	} else {
 		console.log(jqxhr["statusText"]);
