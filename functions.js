@@ -87,6 +87,9 @@ function getinfo() {
 		success: function (json) {
 			huelights = json;
 			console.log(huelights);
+			if ( ! document.getElementById("httpswarning").classList.contains("hidden")) {
+				document.getElementById("httpswarning").classList.add("hidden")
+			}
 			redraw_devices(huelights);
 		}
 	})
