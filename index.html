@@ -56,7 +56,15 @@ $( document ).ajaxError(function( event, jqxhr, settings, thrownError ) {
 		chromeProceedHTML += " then click \"Proceed to "+user_info["huehost"]+" (unsafe)\"<br /><br />";
 		firefoxProceedHTML = "Click this <a href='"+user_info["huehost"]+"' target='_blank'>link</a>, then click the Advanced button,"
 		firefoxProceedHTML += " then click \"Accept the Risk and Continue\"<br /><br />";
-		if(navigator.userAgent.indexOf("Firefox") != -1 ) {
+		operaProceedHTML = "Click this <a href='"+user_info["huehost"]+"' target='_blank'>link</a>, then click \"Help me understand\","
+		operaProceedHTML += " then click \"Proceed to "+user_info["huehost"]+" (unsafe)\"<br /><br />";
+		edgeProceedHTML = "This website does not work in Microsoft Edge."
+		edgeProceedHTML += " Please use Firefox or Chrome instead.<br /><br />";
+		if (navigator.userAgent.indexOf("Edg") != -1 ) {
+			document.getElementById("httpswarning").innerHTML = edgeProceedHTML;
+		} else if (navigator.userAgent.indexOf("Opera") != -1 || navigator.userAgent.indexOf("OPR") != -1 ) {
+			document.getElementById("httpswarning").innerHTML = operaProceedHTML;
+		} else if (navigator.userAgent.indexOf("Firefox") != -1 ) {
 			document.getElementById("httpswarning").innerHTML = firefoxProceedHTML;
 		} else {
 			document.getElementById("httpswarning").innerHTML = chromeProceedHTML;
