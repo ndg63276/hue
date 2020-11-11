@@ -36,6 +36,7 @@ function request_user(tries) {
 				user_info["hueuser"] = json[0]["success"]["username"];
 			}
 			if ("error" in json[0] && json[0]["error"]["type"] == 101) {
+				document.getElementById("httpswarning").classList.add("hidden");
 				document.getElementById("hueuser").innerHTML = "Press the button on your Hue hub to authenticate...";
 			}
 		}
@@ -49,8 +50,10 @@ function request_user(tries) {
 	}
 	maxTries = 10;
 	if (tries >= maxTries) {
-		document.getElementById("hueuser").innerHTML = "Hub not authenticated";
-		document.getElementById("getuser").classList.remove("hidden");
+		if (document.getElementById("httpswarning").classList.contains("hidden")) {
+			document.getElementById("hueuser").innerHTML = "Hub not authenticated";
+			document.getElementById("getuser").classList.remove("hidden");
+		}
 	}
 	if (user_info["hueuser"] == "" && tries < maxTries) {
 		setTimeout(request_user, 3000, tries+1);
@@ -111,6 +114,7 @@ function redraw_devices(huelights) {
 		tr.appendChild(td);
 		var td1 = document.createElement("td");
 		var but = document.createElement("button");
+		but.classList.add("ui-btn", "ui-icon-power", "ui-btn-icon-left", "ui-shadow", "ui-corner-all", "borderShadow");
 		but.innerHTML = "Off";
 		but.onclick = function () { off(this) };
 		but.id = "off_"+light;
@@ -119,6 +123,7 @@ function redraw_devices(huelights) {
 		tr.appendChild(td1);
 		var td2 = document.createElement("td");
 		var but2 = document.createElement("button");
+		but2.classList.add("ui-btn", "ui-icon-power", "ui-btn-icon-left", "ui-shadow", "ui-corner-all", "borderShadow");
 		but2.innerHTML = "On";
 		but2.onclick = function () { on(this) };
 		but2.id = "on_"+light;
@@ -155,6 +160,17 @@ function redraw_devices(huelights) {
 	tbl.appendChild(tbdy);
 	switches.appendChild(tbl);
 	setUpColors();
+	var br = document.createElement("br");
+	switches.appendChild(br);
+	var dv = document.createElement("div");
+	dv.classList.add("in-line-div");
+	var btn = document.createElement("button");
+	btn.classList.add("ui-btn", "ui-icon-action", "ui-btn-icon-left", "ui-shadow", "ui-corner-all", "borderShadow");
+	btn.onclick = function() { logout(); };
+	var lbl = document.createTextNode("Logout");
+	btn.appendChild(lbl);
+	dv.appendChild(btn);
+	switches.appendChild(dv);
 }
 
 function on(element) {
@@ -239,4 +255,10 @@ function setUpColors() {
 		}
 	});
 	$(".color_disabled").spectrum("disable");
+}
+
+function logout() {
+	setCookie("hueid", "", -1);
+	setCookie("hueuser", "", -1);
+	location.reload();
 }
